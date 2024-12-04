@@ -1,44 +1,29 @@
-import os
-import sys
+"""
+poetry install
+poetry shell
+asciinema rec basic.cast --cols 120 --rows 18
+federmark basic
+agg basic.cast basic.gif --theme github-dark --speed 2.5 --font-size 20 \
+    --last-frame-duration 7
+"""
+
 from time import perf_counter as pc
 
 import pandas as pd
-from federleicht import cache_dataframe, clear_cache
+from federleicht import clear_cache
 from yaspin import yaspin
 from yaspin.spinners import Spinners
 
 from federleicht_benchmark.dataset import CsvPath, earthquake
+from federleicht_benchmark.feder import read_data
 
 
-@cache_dataframe
-def read_data(file: str, nrows: int = None, **kwargs) -> pd.DataFrame:
+def main(cache: bool) -> None:
     """
-    Read n rows of the dataset from a CSV file.
-
-    Perform some data type conversions and return the DataFrame.
+    Basic benchmark to test cache build and access time.
     """
-    df = pd.read_csv(
-        file,
-        header=0,
-        nrows=nrows,
-        dtype={
-            "status": "category",
-            "tsunami": "boolean",
-            "data_type": "category",
-            "state": "category",
-        },
-        **kwargs,
-    )
 
-    df["time"] = pd.to_datetime(df["time"], unit="ms")
-    df["date"] = pd.to_datetime(df["date"], format="mixed")
-
-    return df
-
-
-def main():
-
-    filename: CsvPath = earthquake()
+    filename: CsvPath = earthquake(cache)
     print("")
 
     with yaspin(Spinners.line, text="read cache", color="green") as sp:
@@ -81,11 +66,3 @@ def main():
 
     print("")
     print(df.to_markdown())
-
-
-if __name__ == "__main__":
-    try:
-        main()
-    except Exception as e:
-        print(f"Error: {e}", file=sys.stderr)
-        sys.exit(1)

@@ -1,9 +1,9 @@
 from abc import ABC
-import sys
 from typing import List
 
 import kagglehub
 import numpy as np
+import pandas as pd
 import pathlibutil
 
 
@@ -37,11 +37,12 @@ class CsvPath(ABC, pathlibutil.Path):
         ]
 
 
-def download_csv(kaggle: str) -> CsvPath:
+def download_csv(kaggle: str, **kwargs) -> CsvPath:
     """Download a CSV file from Kaggle and return the largest one."""
 
     cache_dir = kagglehub.dataset_download(
         kaggle,
+        **kwargs,
     )
 
     files = sorted(CsvPath(cache_dir).glob("*.csv"), key=lambda x: x.size())
@@ -57,28 +58,27 @@ def download_csv(kaggle: str) -> CsvPath:
     return file
 
 
-def earthquake() -> CsvPath:
+def earthquake(cache: bool = True) -> CsvPath:
     """Download the earthquake dataset from Kaggle."""
 
     return download_csv(
-        "alessandrolobello/the-ultimate-earthquake-dataset-from-1990-2023"
+        "alessandrolobello/the-ultimate-earthquake-dataset-from-1990-2023",
+        force_download=not cache,
     )
 
 
-def main() -> int:
-    try:
-        file = earthquake()
-    except Exception as e:
-        print("Error:", e, file=sys.stderr)
-        return 1
+def main(cache: bool) -> None:
+    """Summary of earthquake dataset from kaggle."""
 
-    lines = file.lines
-    size = file.size()
+    file = earthquake(cache)
 
-    print(f"{str(size):>10}  {lines:>6}  {file.as_posix()}")
+    data = {
+        "Size": [str(file.size())],
+        "Lines": [file.lines],
+        "Filename": [file.as_posix()],
+    }
 
-    return 0
+    df = pd.DataFrame(data)
 
-
-if __name__ == "__main__":
-    raise SystemExit(main())
+    print("")
+    print(df.to_markdown(index=False))

@@ -23,8 +23,6 @@ ENV DEBIAN_FRONTEND=noninteractive
 
 # Install system dependencies and tools
 RUN apt-get update && apt-get install -y \
-    # curl \
-    # wget \
     fish \
     asciinema \
     ffmpeg
@@ -50,8 +48,5 @@ RUN poetry install --no-cache
 # Now copy the rest of the application files (this will be cached separately)
 COPY . /app
 
-
 # Set the default command to use poetry shell
-# ENTRYPOINT ["/bin/bash", "-c", "poetry shell && exec bash"]
-# ENTRYPOINT [ "/bin/bash" ]
 ENTRYPOINT [ "fish" ]
