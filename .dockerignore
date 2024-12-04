@@ -1,0 +1,7 @@
+.*/
+**/__*__/
+
+.coverage
+coverage.xml
+
+!.github/

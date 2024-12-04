@@ -1,0 +1,22 @@
+[tool.poetry]
+name = "federleicht-benchmark"
+version = "0.0.0"
+description = ""
+authors = ["Christoph Dörrer <d-chris@web.de>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.9"
+kagglehub = "^0.3.4"
+matplotlib = "^3.9.2"
+tabulate = "^0.9.0"
+jinja2-pdoc = "^1.3.0"
+yaspin = "^3.1.0"
+federleicht = { git = "https://github.com/d-chris/federleicht.git", branch = "develop" }
+
+[tool.poetry.scripts]
+basic = "federleicht_benchmark.basic:main"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
