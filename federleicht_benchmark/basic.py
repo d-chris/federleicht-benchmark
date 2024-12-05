@@ -45,7 +45,7 @@ def main(cache: bool) -> None:
         "filename": filename.name,
         "size": filename.size().string(),
         "lines": filename.lines,
-        "seconds": build,
+        "seconds": f"{build:.3f}",
     }
 
     cachename = CsvPath(df.attrs["from_cache"])
@@ -54,7 +54,7 @@ def main(cache: bool) -> None:
         "filename": cachename.name,
         "size": cachename.size().string(),
         "lines": df.shape[0],
-        "seconds": read,
+        "seconds": f"{read:.3f}",
     }
 
     df = pd.DataFrame(
@@ -66,3 +66,7 @@ def main(cache: bool) -> None:
 
     print("")
     print(df.to_markdown())
+
+
+if __name__ == "__main__":
+    main(True)

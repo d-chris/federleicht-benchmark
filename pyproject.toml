@@ -20,4 +20,4 @@ federleicht = { git = "https://github.com/d-chris/federleicht.git", branch = "de
 click = "^8.1.7"
 
 [tool.poetry.scripts]
-federmark = "federleicht_benchmark.cli:cli"
+federleicht = "federleicht_benchmark.cli:cli"
