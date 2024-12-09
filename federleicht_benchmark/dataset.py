@@ -67,6 +67,24 @@ def earthquake(cache: bool = True) -> CsvPath:
     )
 
 
+def delete_earthquake():
+    """Clear the Kaggle cache directory."""
+
+    cache = pathlibutil.Path.home().joinpath(".cache/kagglehub")
+
+    dataset = cache / "datasets/alessandrolobello"
+
+    try:
+        dataset.delete(recursive=True)
+    except FileNotFoundError:
+        pass
+    else:
+        try:
+            cache.rmdir()
+        except Exception:
+            pass
+
+
 def main(cache: bool) -> None:
     """Summary of earthquake dataset from kaggle."""
 

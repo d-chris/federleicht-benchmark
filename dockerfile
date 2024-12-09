@@ -1,3 +1,6 @@
+ARG PYTHON_VERSION=3.13
+ARG POETRY_VERSION=1.8.4
+
 # Stage 1: Build the Rust project
 FROM rust:latest AS builder
 
@@ -12,41 +15,56 @@ WORKDIR /agg
 RUN git clone https://github.com/asciinema/agg.git -b v1.5.0 . && \
     cargo build --release
 
-# Stage 2: Set up the Python environment
-FROM python:3.13-slim
+# Stage 2: Build the Python environment
+FROM python:${PYTHON_VERSION}-slim AS venv
+
+# Re-declare the ARG variables to make them available in this stage
+ARG POETRY_VERSION
+
+RUN pip install poetry==${POETRY_VERSION}
+
+ENV POETRY_NO_INTERACTION=1 \
+    POETRY_VIRTUALENVS_IN_PROJECT=1 \
+    POETRY_VIRTUALENVS_CREATE=1 \
+    POETRY_CACHE_DIR=/tmp/poetry_cache
+
+WORKDIR /app
+
+COPY pyproject.toml poetry.lock ./
+
+COPY . ./
+
+RUN --mount=type=cache,target=$POETRY_CACHE_DIR poetry build
+
+
+# Stage 3: Set up the runtime environment
+FROM python:${PYTHON_VERSION}-slim AS runtime
 
 # Specify the author of the Docker image
 LABEL org.opencontainers.image.authors="Christoph Dörrer <d-chris@web.de>"
 
-# Set non-interactive mode for apt
-ENV DEBIAN_FRONTEND=noninteractive
 
 # Install system dependencies and tools
-RUN apt-get update && apt-get install -y \
-    fish \
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    git \
     asciinema \
-    ffmpeg
-
-RUN apt-get clean \
-    && rm -rf /var/lib/apt/lists/*
+    fonts-dejavu \
+    && rm -rf /var/cache/apk/*
 
 # Copy the built binary from the builder stage
 COPY --from=builder /agg/target/release/agg /usr/local/bin/
 
-# Install Poetry
-RUN pip install --no-cache-dir poetry
+# Copy the wheel file from the build stage
+COPY --from=venv /app/dist/*.whl /tmp/
 
-# Set working directory
+# Set the PIP_CACHE_DIR environment variable
+ENV PIP_CACHE_DIR=/tmp/pip_cache
+
+# Install the wheel file and its dependencies using the cache directory
+RUN --mount=type=cache,target=$PIP_CACHE_DIR pip install /tmp/*.whl --cache-dir=$PIP_CACHE_DIR
+
+# Set the working directory
 WORKDIR /app
 
-# Copy only the poetry files first to take advantage of caching
-COPY pyproject.toml poetry.lock* /app/
 
-# Install dependencies (this will be cached unless pyproject.toml or poetry.lock changes)
-RUN poetry install --no-cache
-
-# Now copy the rest of the application files (this will be cached separately)
-COPY . /app
-
-# Set the default command to use poetry shell
-ENTRYPOINT [ "fish" ]
+ENTRYPOINT ["/bin/sh"]
